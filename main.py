@@ -12,32 +12,27 @@ def next_state(state: np.ndarray) -> np.ndarray:
     rows, cols = state.shape
     new_state = np.zeros((rows, cols), dtype=int)
 
-    dirx = np.array([0, 1, 0, -1, -1, 1, -1, 1])
-    diry = np.array([-1, 0, 1, 0, -1, 1, 1, -1])
+    dir = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 
     for x in range(rows):
         for y in range(cols):
-            neighbors = 0
+            neighbors = sum(
+                state[x + dx, y + dy]
+                for dx, dy in dir
+                if 0 <= x + dx < rows and 0 <= y + dy < cols
+            )
 
-            for i in range(8):
-                nx, ny = x + dirx[i], y + diry[i]
-
-                if 0 <= nx < rows and 0 <= ny < cols:
-                    neighbors += state[nx, ny]
-
-            if state[x, y] == 1 and (neighbors < 2 or neighbors > 3):
-                new_state[x, y] = 0
-            elif state[x, y] == 0 and neighbors == 3:
-                new_state[x, y] = 1
+            if state[x, y] == 1:
+                new_state[x, y] = 1 if neighbors in (2, 3) else 0
             else:
-                new_state[x, y] = state[x, y]
+                new_state[x, y] = 1 if neighbors == 3 else 0
 
     return new_state
 
 
-def render(state: np.ndarray) -> np.ndarray:
+def render(state: np.ndarray):
     for row in state:
-        print(" ".join(["." if cell == 0 else "#" for cell in row]))
+        print(" ".join("#" if cell == 1 else "." for cell in row))
 
 
 def main():
@@ -45,10 +40,12 @@ def main():
         try:
             height = int(input("Height: "))
             width = int(input("Width: "))
+            if height <= 0 or width <= 0:
+                raise ValueError("Height and Width must be positive integers.")
             state = random_state(height, width)
             break
-        except ValueError as e:
-            print(f"Invalid input: {e}. Please enter positive integers.")
+        except ValueError as error:
+            print(f"Invalid input: {error}. Please enter positive integers.")
         except KeyboardInterrupt:
             print("\nExiting...")
             sys.exit()
